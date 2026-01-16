@@ -19,7 +19,7 @@ if (workbox) {
   // The revision field enables cache-busting when files change.
   // For files with hashes in their names, revision can be null.
   const PRECACHE_MANIFEST = [
-    { url: "./index.html", revision: "v5" },
+    { url: "./index.html", revision: "v6" },
     { url: "./css/game.css", revision: "v2" },
     { url: "./manifest.json", revision: "v1" },
     { url: "./icon/icon.png", revision: "v1" },
@@ -46,6 +46,8 @@ if (workbox) {
     { url: "./js/plugins/ButtonPicture.js", revision: "v1" },
     { url: "./js/plugins/COCOMODE_enemyLevels.js", revision: "v1" },
     { url: "./js/plugins/ProceduralQuestSystem.js", revision: "v1" },
+    { url: "./js/plugins/SimpleP2P_Evolution.js", revision: "v1" },
+    { url: "./js/plugins/SimpleP2P_Refined_v2.js", revision: "v1" },
     { url: "./js/plugins/SimpleQuestLog.js", revision: "v1" },
     { url: "./js/plugins/TextPicture.js", revision: "v1" },
     // Core Data files (Needed for boot)
