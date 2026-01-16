@@ -20,7 +20,7 @@ if (workbox) {
   // For files with hashes in their names, revision can be null.
   const PRECACHE_MANIFEST = [
     { url: "./index.html", revision: "v1" },
-    { url: "./css/game.css", revision: "v1" },
+    { url: "./css/game.css", revision: "v2" },
     { url: "./manifest.json", revision: "v1" },
     { url: "./icon/icon.png", revision: "v1" },
     // Critical Game Engine Files (must match main.js scriptUrls)
