@@ -1,6 +1,7 @@
 {
     "name": "rmmz-game",
     "main": "index.html",
+    "scripts": {},
     "chromium-args": "--force-color-profile=srgb --disable-devtools",
     "window": {
         "title": "Tests",

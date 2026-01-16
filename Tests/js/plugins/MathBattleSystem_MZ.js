@@ -1,20 +1,23 @@
 /*:
  * @target MZ
- * @plugindesc (MZ) Math Battle System V10 - Clean Integer Answers & Division Cap
+ * @plugindesc (MZ) Math Battle System V11 - Mobile Keypad Support
  * @author Gemini AI
  *
  * @help
  * ============================================================================
- * Math Battle System V10
+ * Math Battle System V11
  * ============================================================================
  * * INSTRUCTIONS:
  * 1. Paste this code into "MathBattleSystem_MZ.js".
  * 2. Ensure Battle System is set to "Time Progress (Wait)".
  *
+ * --- UPDATE V11: MOBILE KEYPAD ---
+ * - If the game detects a Mobile Device (App or Web Browser), a touch-friendly
+ * keypad will appear automatically.
+ * - Keypad includes: 0-9, Minus (-), Backspace (DEL), and Enter (OK).
+ *
  * --- UPDATE V10: DIVISION CAP ---
  * - Multiplication AND Division now cap the second number at 20.
- * - Ensures questions like "80 / 4" (Valid) instead of "80 / 37" (Hard).
- * - Still enforces Clean Integer Rules (Must divide evenly).
  *
  * --- TIMER LOGIC (Content Aware) ---
  * 1. Hard Ops (* /) give 1.25s. Simple Ops (+ -) give 0.5s.
@@ -25,7 +28,7 @@
 (() => {
     const pluginName = "MathBattleSystem_MZ";
 
-    // --- LOGIC SYSTEM ---
+    // --- LOGIC SYSTEM (UNCHANGED) ---
     const MathSystem = {
         resultMultiplier: 1.0,
         forceCrit: false,
@@ -36,7 +39,6 @@
         generateProblem: function(level) {
             let isValid = false;
             let problemData = {};
-            // Increased safety count to ensure we find a clean division result
             let safetyCount = 0;
 
             while (!isValid && safetyCount < 300) {
@@ -71,7 +73,6 @@
                 let hasDivision = false;
                 for(let i=0; i<numTerms-1; i++) {
                     let op = operatorsPool[Math.floor(Math.random() * operatorsPool.length)];
-                    // Prevent double division to keep things readable
                     if (op === '/') {
                         if (hasDivision) { op = '+'; } else { hasDivision = true; }
                     }
@@ -79,8 +80,6 @@
                 }
 
                 // --- CONSTRAINT: Multiplication & Division Scaling ---
-                // If operation is * or /, force the second number to be small (1-20)
-                // This prevents overwhelming calculations like 74 * 44 or 74 / 44
                 for (let i = 0; i < ops.length; i++) {
                     if (ops[i] === '*' || ops[i] === '/') {
                         nums[i+1] = Math.floor(Math.random() * 20) + 1;
@@ -105,56 +104,42 @@
                 try { rawAnswer = eval(formulaStr); } catch (e) { continue; }
                 
                 // --- VALIDATION CHECKS ---
-                
-                // 1. Must be finite number
                 if (!isFinite(rawAnswer) || isNaN(rawAnswer)) continue;
-
-                // 2. MUST BE WHOLE NUMBER (No Decimals)
-                // logic: checks if dividing by 1 leaves a remainder
                 if (!Number.isInteger(rawAnswer)) continue;
 
                 let answer = rawAnswer;
-                
-                // 3. No negative answers below level 50
                 if (level < 50 && answer < 0) continue;
 
                 // --- SMART TIMER CALCULATION ---
-                let frames = 180; // Base: 3 Seconds
+                let frames = 180; 
                 
-                // Op Weights
                 for (let op of ops) {
                     if (op === '*' || op === '/') {
-                        frames += 75; // +1.25s
+                        frames += 75; 
                     } else {
-                        frames += 30; // +0.5s
+                        frames += 30; 
                     }
                 }
                 
-                // Magnitude Weights
                 for (let n of nums) {
                     if (n > 30) frames += 30; 
                     if (n > 100) frames += 30;
                 }
 
-                // Complexity Weights
                 if (visualStr.includes('(')) frames += 45; 
                 if (visualStr.includes('/')) frames += 45; 
 
-                // Level Scaling
                 frames += (level * 2);
-
-                // Digit Scaling
+                
                 let totalDigits = nums.reduce((sum, n) => sum + String(n).length, 0);
                 frames += (totalDigits * 20); 
 
-                // Cap Max Time
                 if (frames > 1800) frames = 1800;
 
                 problemData = { question: visualStr + " = ?", answer: answer, maxTime: frames };
                 isValid = true;
             }
             
-            // Fallback if we somehow fail 300 times (unlikely)
             if (!isValid) return { question: "2 + 2 = ?", answer: 4, maxTime: 300 };
             return problemData;
         }
@@ -243,7 +228,7 @@
         return _Game_Action_itemHit.call(this, target);
     };
 
-    // --- WINDOW UI ---
+    // --- UI: MATH DISPLAY WINDOW ---
 
     class Window_MathInput extends Window_Base {
         constructor(rect) {
@@ -313,7 +298,67 @@
         }
     }
 
-    // Global Key Listener
+    // --- UI: MOBILE KEYPAD WINDOW ---
+    // New class to handle touch inputs on mobile/web
+    class Window_MathKeypad extends Window_Command {
+        constructor(rect) {
+            super(rect);
+            this.openness = 0;
+            this.active = false;
+            this.hide();
+        }
+
+        makeCommandList() {
+            // Standard Numpad Layout
+            // 1 2 3
+            // 4 5 6
+            // 7 8 9
+            // - 0 DEL
+            // OK
+            this.addCommand("1", "1");
+            this.addCommand("2", "2");
+            this.addCommand("3", "3");
+            this.addCommand("4", "4");
+            this.addCommand("5", "5");
+            this.addCommand("6", "6");
+            this.addCommand("7", "7");
+            this.addCommand("8", "8");
+            this.addCommand("9", "9");
+            this.addCommand("-", "-");
+            this.addCommand("0", "0");
+            this.addCommand("DEL", "back");
+            this.addCommand("OK", "ok");
+        }
+
+        maxCols() {
+            return 3;
+        }
+
+        // Override to handle clicks
+        callHandler(symbol) {
+            const mathWin = SceneManager._scene._mathWindow;
+            if (!mathWin || !mathWin.active) return;
+
+            if (symbol === "back") {
+                mathWin._inputValue = mathWin._inputValue.slice(0, -1);
+                mathWin.refresh();
+                SoundManager.playCancel();
+            } else if (symbol === "ok") {
+                SoundManager.playOk();
+                mathWin.checkAnswer();
+                this.close(); // Close keypad when submitting
+            } else {
+                // Number or Minus
+                mathWin._inputValue += symbol;
+                mathWin.refresh();
+                SoundManager.playCursor();
+            }
+            this.activate(); // Keep focus for next click
+        }
+    }
+
+    // --- SCENE INTEGRATION ---
+
     const _Input_onKeyDown = Input._onKeyDown;
     Input._onKeyDown = function(event) {
         _Input_onKeyDown.call(this, event);
@@ -331,19 +376,56 @@
                 win._inputValue = win._inputValue.slice(0, -1);
                 win.refresh();
             }
-            if (event.key === "Enter") win.checkAnswer();
+            if (event.key === "Enter") {
+                win.checkAnswer();
+                // Close keypad if it's open
+                if (SceneManager._scene._mathKeypad) SceneManager._scene._mathKeypad.close();
+            }
         }
     };
 
     const _Scene_Battle_createAllWindows = Scene_Battle.prototype.createAllWindows;
     Scene_Battle.prototype.createAllWindows = function() {
         _Scene_Battle_createAllWindows.call(this);
-        const rect = new Rectangle((Graphics.boxWidth - 400)/2, (Graphics.boxHeight - 200)/2 - 100, 400, 200);
+        
+        // 1. Create Main Math Display
+        const rect = new Rectangle((Graphics.boxWidth - 400)/2, (Graphics.boxHeight - 200)/2 - 140, 400, 200);
         this._mathWindow = new Window_MathInput(rect);
         this.addWindow(this._mathWindow);
+
+        // 2. Create Mobile Keypad (Hidden by default)
+        // Positioned under the math window
+        const padW = 400;
+        const padH = 240; // Enough height for 5 rows
+        const padRect = new Rectangle((Graphics.boxWidth - padW)/2, rect.y + rect.height, padW, padH);
+        this._mathKeypad = new Window_MathKeypad(padRect);
+        this._mathKeypad.setHandler("1", this._mathKeypad.callHandler.bind(this._mathKeypad, "1"));
+        this._mathKeypad.setHandler("2", this._mathKeypad.callHandler.bind(this._mathKeypad, "2"));
+        this._mathKeypad.setHandler("3", this._mathKeypad.callHandler.bind(this._mathKeypad, "3"));
+        this._mathKeypad.setHandler("4", this._mathKeypad.callHandler.bind(this._mathKeypad, "4"));
+        this._mathKeypad.setHandler("5", this._mathKeypad.callHandler.bind(this._mathKeypad, "5"));
+        this._mathKeypad.setHandler("6", this._mathKeypad.callHandler.bind(this._mathKeypad, "6"));
+        this._mathKeypad.setHandler("7", this._mathKeypad.callHandler.bind(this._mathKeypad, "7"));
+        this._mathKeypad.setHandler("8", this._mathKeypad.callHandler.bind(this._mathKeypad, "8"));
+        this._mathKeypad.setHandler("9", this._mathKeypad.callHandler.bind(this._mathKeypad, "9"));
+        this._mathKeypad.setHandler("0", this._mathKeypad.callHandler.bind(this._mathKeypad, "0"));
+        this._mathKeypad.setHandler("-", this._mathKeypad.callHandler.bind(this._mathKeypad, "-"));
+        this._mathKeypad.setHandler("back", this._mathKeypad.callHandler.bind(this._mathKeypad, "back"));
+        this._mathKeypad.setHandler("ok", this._mathKeypad.callHandler.bind(this._mathKeypad, "ok"));
+        
+        this.addWindow(this._mathKeypad);
     };
 
     Scene_Battle.prototype.startMathChallenge = function(problem, callback) {
         this._mathWindow.setup(problem, callback);
+        
+        // --- DETECTION LOGIC ---
+        // If Mobile Device OR strictly not a Desktop App (likely Web/Mobile)
+        if (Utils.isMobileDevice()) {
+            this._mathKeypad.show();
+            this._mathKeypad.open();
+            this._mathKeypad.activate();
+            this._mathKeypad.select(0); // Select '1' by default
+        }
     };
 })();
