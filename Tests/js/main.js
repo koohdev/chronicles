@@ -121,6 +121,22 @@ class Main {
     } else if (this.error) {
       this.printError(this.error.name, this.error.message);
     } else {
+      // Attempt to unlock audio context for iOS/Mobile
+      const unlockAudio = () => {
+        if (typeof WebAudio !== "undefined" && WebAudio._context) {
+          if (WebAudio._context.state === "suspended") {
+            WebAudio._context.resume().then(() => {
+              console.log("Audio Context Resumed!");
+            });
+          }
+        }
+        // Remove listeners once unlocked
+        document.removeEventListener("touchstart", unlockAudio);
+        document.removeEventListener("click", unlockAudio);
+      };
+      document.addEventListener("touchstart", unlockAudio);
+      document.addEventListener("click", unlockAudio);
+
       this.initEffekseerRuntime();
     }
   }
