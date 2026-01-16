@@ -51,7 +51,7 @@ if (workbox) {
       cacheName: "game-assets",
       plugins: [
         new workbox.expiration.ExpirationPlugin({
-          maxEntries: 5000,
+          maxEntries: 500, // Games have many files
           maxAgeSeconds: 30 * 24 * 60 * 60, // 30 Days
         }),
         new workbox.cacheableResponse.CacheableResponsePlugin({
@@ -71,38 +71,67 @@ if (workbox) {
 self.addEventListener("install", (event) => {
   self.skipWaiting();
 
-  // Precache core assets manually to ensure they are available offline
-  // immediately after "Add to Home Screen".
+  // Assets to precache
+  const PRECACHE_ASSETS = [
+    "./index.html",
+    "./css/game.css",
+    "./js/main.js",
+    "./manifest.json",
+    "./icon/icon.png",
+    // Critical Game Engine Files (must match main.js scriptUrls)
+    "./js/libs/pixi.js",
+    "./js/libs/pako.min.js",
+    "./js/libs/localforage.min.js",
+    "./js/libs/effekseer.min.js",
+    "./js/libs/vorbisdecoder.js",
+    "./js/rmmz_core.js",
+    "./js/rmmz_managers.js",
+    "./js/rmmz_objects.js",
+    "./js/rmmz_scenes.js",
+    "./js/rmmz_sprites.js",
+    "./js/rmmz_windows.js",
+    "./js/plugins.js",
+    "./js/libs/effekseer.wasm",
+  ];
+
+  // Helper to generate a visual progress bar
+  function progressBar(current, total, width = 20) {
+    const percent = Math.round((current / total) * 100);
+    const filled = Math.round((current / total) * width);
+    const empty = width - filled;
+    const bar = "█".repeat(filled) + "░".repeat(empty);
+    return `[${current}/${total}] ${bar} ${percent}%`;
+  }
+
+  // Precache with progress logging
   event.waitUntil(
-    caches.open("game-core").then((cache) => {
-      // Add 'rmmz_core.js' etc if you want the full engine cached on install,
-      // otherwise they will be cached at runtime when loaded.
-      // At minimum, we need the entry point and main loader.
-      return cache
-        .addAll([
-          "./index.html",
-          "./css/game.css",
-          "./js/main.js",
-          "./manifest.json",
-          "./icon/icon.png",
-          // Critical Game Engine Files (must match main.js scriptUrls)
-          "./js/libs/pixi.js",
-          "./js/libs/pako.min.js",
-          "./js/libs/localforage.min.js",
-          "./js/libs/effekseer.min.js",
-          "./js/libs/vorbisdecoder.js",
-          "./js/rmmz_core.js",
-          "./js/rmmz_managers.js",
-          "./js/rmmz_objects.js",
-          "./js/rmmz_scenes.js",
-          "./js/rmmz_sprites.js",
-          "./js/rmmz_windows.js",
-          "./js/plugins.js",
-          "./js/libs/effekseer.wasm",
-        ])
-        .catch((err) => {
-          console.error("SW: Precache failed:", err);
-        });
+    caches.open("game-core").then(async (cache) => {
+      const total = PRECACHE_ASSETS.length;
+      let cached = 0;
+      let failed = 0;
+
+      console.log(`\n🎮 SW: Starting precache of ${total} assets...\n`);
+
+      for (const url of PRECACHE_ASSETS) {
+        try {
+          await cache.add(url);
+          cached++;
+          console.log(`✅ ${progressBar(cached, total)} - ${url}`);
+        } catch (err) {
+          failed++;
+          console.error(
+            `❌ ${progressBar(cached, total)} - FAILED: ${url}`,
+            err.message
+          );
+        }
+      }
+
+      console.log(`\n🏁 SW: Precache complete!`);
+      console.log(`   ✅ Cached: ${cached}/${total}`);
+      if (failed > 0) {
+        console.warn(`   ❌ Failed: ${failed}/${total}`);
+      }
+      console.log(``);
     })
   );
 });
