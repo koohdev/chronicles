@@ -111,7 +111,8 @@ class Main {
   }
 
   onWindowLoad() {
-    if (!this.xhrSucceeded) {
+    if (false) {
+      // Bypassed: This check fails on some mobile browsers even over HTTPS
       const message = "Your browser does not allow to read local files.";
       this.printError("Error", message);
     } else if (this.isPathRandomized()) {

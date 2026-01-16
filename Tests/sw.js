@@ -24,7 +24,7 @@ if (workbox) {
     { url: "./manifest.json", revision: "v1" },
     { url: "./icon/icon.png", revision: "v1" },
     // Critical Game Engine Files (must match main.js scriptUrls)
-    { url: "./js/main.js", revision: "v3" },
+    { url: "./js/main.js", revision: "v4" },
     { url: "./js/libs/pixi.js", revision: "v1" },
     { url: "./js/libs/pako.min.js", revision: "v1" },
     { url: "./js/libs/localforage.min.js", revision: "v1" },
@@ -38,6 +38,21 @@ if (workbox) {
     { url: "./js/rmmz_sprites.js", revision: "v1" },
     { url: "./js/rmmz_windows.js", revision: "v1" },
     { url: "./js/plugins.js", revision: "v1" },
+    // Core Data files (Needed for boot)
+    { url: "./data/System.json", revision: "v1" },
+    { url: "./data/Actors.json", revision: "v1" },
+    { url: "./data/Classes.json", revision: "v1" },
+    { url: "./data/Skills.json", revision: "v1" },
+    { url: "./data/Items.json", revision: "v1" },
+    { url: "./data/Weapons.json", revision: "v1" },
+    { url: "./data/Armors.json", revision: "v1" },
+    { url: "./data/Enemies.json", revision: "v1" },
+    { url: "./data/Troops.json", revision: "v1" },
+    { url: "./data/States.json", revision: "v1" },
+    { url: "./data/Animations.json", revision: "v1" },
+    { url: "./data/Tilesets.json", revision: "v1" },
+    { url: "./data/CommonEvents.json", revision: "v1" },
+    { url: "./data/MapInfos.json", revision: "v1" },
   ];
 
   // Log precache list
