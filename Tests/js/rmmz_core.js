@@ -4711,40 +4711,50 @@ WebAudio.setMasterVolume = function (value) {
 };
 
 WebAudio._createContext = function () {
-  try {
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
-    this._context = new AudioContext();
-    // If context starts suspended (iOS PWA), it's fine - _onUserGesture will resume it
-    if (this._context.state === "suspended") {
-      console.log(
-        "AudioContext created in suspended state (normal for iOS PWA)"
-      );
-    }
-  } catch (e) {
-    console.warn(
-      "AudioContext creation failed, will retry on user gesture:",
-      e.message
+  // On mobile/iOS, completely defer AudioContext creation until first user gesture
+  // This prevents the "failed to start audio device" error in PWA mode
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+  if (isMobile) {
+    console.log(
+      "Mobile detected: Deferring AudioContext creation until user gesture"
     );
     this._context = null;
-    // Deferred creation: try again on first user gesture
-    const retryCreate = () => {
-      if (!this._context) {
+    this._pendingContextCreation = true;
+
+    const createOnGesture = () => {
+      if (this._pendingContextCreation && !this._context) {
         try {
           const AudioContext = window.AudioContext || window.webkitAudioContext;
           this._context = new AudioContext();
           this._createMasterGainNode();
-          console.log("AudioContext created on user gesture!");
-        } catch (e2) {
-          console.error("AudioContext retry failed:", e2.message);
+          this._pendingContextCreation = false;
+          console.log("AudioContext created successfully on user gesture!");
+
+          // Resume if suspended
+          if (this._context.state === "suspended") {
+            this._context.resume();
+          }
+        } catch (e) {
+          console.error("AudioContext creation failed:", e.message);
         }
       }
-      document.removeEventListener("touchstart", retryCreate);
-      document.removeEventListener("touchend", retryCreate);
-      document.removeEventListener("click", retryCreate);
+      // Don't remove listeners - keep them for future resume needs
     };
-    document.addEventListener("touchstart", retryCreate);
-    document.addEventListener("touchend", retryCreate);
-    document.addEventListener("click", retryCreate);
+
+    document.addEventListener("touchstart", createOnGesture, { passive: true });
+    document.addEventListener("touchend", createOnGesture, { passive: true });
+    document.addEventListener("click", createOnGesture);
+    document.addEventListener("keydown", createOnGesture);
+  } else {
+    // Desktop: create immediately (usually works fine)
+    try {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      this._context = new AudioContext();
+    } catch (e) {
+      console.warn("AudioContext creation failed:", e.message);
+      this._context = null;
+    }
   }
 };
 

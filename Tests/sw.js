@@ -31,7 +31,7 @@ if (workbox) {
     { url: "./js/libs/effekseer.min.js", revision: "v1" },
     { url: "./js/libs/vorbisdecoder.js", revision: "v1" },
     { url: "./js/libs/effekseer.wasm", revision: "v1" },
-    { url: "./js/rmmz_core.js", revision: "v2" },
+    { url: "./js/rmmz_core.js", revision: "v3" },
     { url: "./js/rmmz_managers.js", revision: "v1" },
     { url: "./js/rmmz_objects.js", revision: "v1" },
     { url: "./js/rmmz_scenes.js", revision: "v1" },
