@@ -19,12 +19,12 @@ if (workbox) {
   // The revision field enables cache-busting when files change.
   // For files with hashes in their names, revision can be null.
   const PRECACHE_MANIFEST = [
-    { url: "./index.html", revision: "v1" },
+    { url: "./index.html", revision: "v2" },
     { url: "./css/game.css", revision: "v2" },
     { url: "./manifest.json", revision: "v1" },
     { url: "./icon/icon.png", revision: "v1" },
     // Critical Game Engine Files (must match main.js scriptUrls)
-    { url: "./js/main.js", revision: "v2" },
+    { url: "./js/main.js", revision: "v3" },
     { url: "./js/libs/pixi.js", revision: "v1" },
     { url: "./js/libs/pako.min.js", revision: "v1" },
     { url: "./js/libs/localforage.min.js", revision: "v1" },

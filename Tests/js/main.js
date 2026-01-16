@@ -147,19 +147,6 @@ class Main {
 
   onEffekseerLoad() {
     this.eraseLoadingSpinner();
-
-    // Hook into SceneManager.run to hide the loading overlay
-    // This must be done HERE because SceneManager is defined in rmmz_scenes.js
-    // which is loaded dynamically and not available at main.js parse time.
-    const overlay = document.getElementById("loading-overlay");
-    if (overlay) {
-      const _SceneManager_run = SceneManager.run;
-      SceneManager.run = function (sceneClass) {
-        overlay.style.display = "none";
-        _SceneManager_run.call(this, sceneClass);
-      };
-    }
-
     SceneManager.run(Scene_Boot);
   }
 
