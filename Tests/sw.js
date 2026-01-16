@@ -51,7 +51,7 @@ if (workbox) {
       cacheName: "game-assets",
       plugins: [
         new workbox.expiration.ExpirationPlugin({
-          maxEntries: 500, // Games have many files
+          maxEntries: 5000,
           maxAgeSeconds: 30 * 24 * 60 * 60, // 30 Days
         }),
         new workbox.cacheableResponse.CacheableResponsePlugin({
@@ -67,7 +67,6 @@ if (workbox) {
   console.log(`Workbox didn't load`);
 }
 
-// Skip waiting to activate the new SW immediately
 // Skip waiting to activate the new SW immediately
 self.addEventListener("install", (event) => {
   self.skipWaiting();
