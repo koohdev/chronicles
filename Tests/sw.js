@@ -1,4 +1,6 @@
-importScripts('https://storage.googleapis.com/workbox-cdn/releases/7.0.0/workbox-sw.js');
+importScripts(
+  "https://storage.googleapis.com/workbox-cdn/releases/7.0.0/workbox-sw.js"
+);
 
 if (workbox) {
   console.log(`Workbox is loaded`);
@@ -9,19 +11,19 @@ if (workbox) {
   // --- Caching Strategies ---
 
   // 1. HTML, JS, CSS, JSON (Game Logic & Data) - StaleWhileRevalidate
-  // We want these to update fairly quickly if you push a new version, 
+  // We want these to update fairly quickly if you push a new version,
   // but load instantly from cache first.
   workbox.routing.registerRoute(
-    ({request, url}) => {
+    ({ request, url }) => {
       return (
-        request.destination === 'document' ||
-        request.destination === 'script' ||
-        request.destination === 'style' ||
-        url.pathname.endsWith('.json')
+        request.destination === "document" ||
+        request.destination === "script" ||
+        request.destination === "style" ||
+        url.pathname.endsWith(".json")
       );
     },
     new workbox.strategies.StaleWhileRevalidate({
-      cacheName: 'game-core',
+      cacheName: "game-core",
       plugins: [
         new workbox.expiration.ExpirationPlugin({
           maxEntries: 50,
@@ -34,19 +36,19 @@ if (workbox) {
   // 2. Images, Audio, Fonts (Static Assets) - CacheFirst
   // These rarely change. Valid for 30 days.
   workbox.routing.registerRoute(
-    ({request, url}) => {
+    ({ request, url }) => {
       return (
-        request.destination === 'image' ||
-        request.destination === 'audio' ||
-        request.destination === 'font' ||
-        url.pathname.includes('/img/') ||
-        url.pathname.includes('/audio/') ||
-        url.pathname.includes('/fonts/') ||
-        url.pathname.includes('/icon/')
+        request.destination === "image" ||
+        request.destination === "audio" ||
+        request.destination === "font" ||
+        url.pathname.includes("/img/") ||
+        url.pathname.includes("/audio/") ||
+        url.pathname.includes("/fonts/") ||
+        url.pathname.includes("/icon/")
       );
     },
     new workbox.strategies.CacheFirst({
-      cacheName: 'game-assets',
+      cacheName: "game-assets",
       plugins: [
         new workbox.expiration.ExpirationPlugin({
           maxEntries: 500, // Games have many files
@@ -61,12 +63,47 @@ if (workbox) {
 
   // Offline fallback (Optional but good practice)
   // For a single page app/game, we just rely on index.html being cached above.
-
 } else {
   console.log(`Workbox didn't load`);
 }
 
 // Skip waiting to activate the new SW immediately
-self.addEventListener('install', (event) => {
+// Skip waiting to activate the new SW immediately
+self.addEventListener("install", (event) => {
   self.skipWaiting();
+
+  // Precache core assets manually to ensure they are available offline
+  // immediately after "Add to Home Screen".
+  event.waitUntil(
+    caches.open("game-core").then((cache) => {
+      // Add 'rmmz_core.js' etc if you want the full engine cached on install,
+      // otherwise they will be cached at runtime when loaded.
+      // At minimum, we need the entry point and main loader.
+      return cache
+        .addAll([
+          "./index.html",
+          "./css/game.css",
+          "./js/main.js",
+          "./manifest.json",
+          "./icon/icon.png",
+          // Critical Game Engine Files (must match main.js scriptUrls)
+          "./js/libs/pixi.js",
+          "./js/libs/pako.min.js",
+          "./js/libs/localforage.min.js",
+          "./js/libs/effekseer.min.js",
+          "./js/libs/vorbisdecoder.js",
+          "./js/rmmz_core.js",
+          "./js/rmmz_managers.js",
+          "./js/rmmz_objects.js",
+          "./js/rmmz_scenes.js",
+          "./js/rmmz_sprites.js",
+          "./js/rmmz_windows.js",
+          "./js/plugins.js",
+          "./js/libs/effekseer.wasm",
+        ])
+        .catch((err) => {
+          console.error("SW: Precache failed:", err);
+        });
+    })
+  );
 });

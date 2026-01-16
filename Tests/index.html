@@ -14,19 +14,143 @@
     <link rel="manifest" href="manifest.json" />
     <title>Tests</title>
   </head>
-  <body style="background-color: black">
-    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <div id="loading-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #111; color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; font-family: sans-serif;">
+      <h1>Loading Game...</h1>
+      <p id="loading-status">Initializing...</p>
+      <small style="color: #666; margin-top: 20px;">If this screen persists, check console (F12)</small>
+    </div>
+
+    <script>
+      // Global Error Handler to catch start-up crashes
+      window.onerror = function(msg, url, line, col, error) {
+        const overlay = document.getElementById('loading-overlay');
+        const status = document.getElementById('loading-status');
+        if (overlay && status) {
+          overlay.style.background = "#300"; // Red tint for error
+          status.innerHTML = `<strong>Error:</strong> ${msg}<br><br><small>${url}:${line}</small>`;
+          status.style.color = "#ff9999";
+        }
+        return false;
+      };
+
+      // Check for SES/Lockdown interference
+      if (window.lockdown || window.harden) {
+        console.warn("Agoric/SES environment detected (likely from a browser extension). This may break the game engine.");
+        const status = document.getElementById('loading-status');
+        if (status) status.innerHTML += "<br><span style='color:orange'>Warning: 'Hardened JS' detected. Try disabling Wallet extensions.</span>";
+      }
+    </script>
+
+    <div id="offline-ui" style="position: fixed; bottom: 20px; right: 20px; z-index: 10000; font-family: sans-serif; color: white; background: rgba(0,0,0,0.8); padding: 10px; border-radius: 8px; display: none;">
+      <button id="download-btn" style="background: #4CAF50; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 14px;">
+        Download for Offline ⬇️
+      </button>
+      <div id="download-progress" style="margin-top: 10px; display: none;">
+        <div style="background: #555; width: 200px; height: 10px; border-radius: 5px; overflow: hidden;">
+          <div id="progress-bar" style="background: #4CAF50; width: 0%; height: 100%;"></div>
+        </div>
+        <div id="progress-text" style="font-size: 12px; margin-top: 5px; text-align: center;">0 / 0</div>
+      </div>
+    </div>
+
+    <script>
+      // Offline Asset Manager
+      (async function() {
+        const CACHE_NAME = 'game-assets';
+        
+        async function checkOfflineStatus() {
+           // efficient check: see if we have the assets list cached or a flag
+           const isOfflineReady = localStorage.getItem('offline-ready') === 'true';
+           if (!isOfflineReady) {
+             document.getElementById('offline-ui').style.display = 'block';
+           }
+        }
+
+        async function downloadAssets() {
+          const btn = document.getElementById('download-btn');
+          const progressDiv = document.getElementById('download-progress');
+          const progressBar = document.getElementById('progress-bar');
+          const progressText = document.getElementById('progress-text');
+          
+          btn.style.display = 'none';
+          progressDiv.style.display = 'block';
+
+          try {
+            // 1. Get the list of files
+            const response = await fetch('assets.json');
+            if (!response.ok) throw new Error('Could not load asset list');
+            const files = await response.json();
+            
+            const total = files.length;
+            let count = 0;
+            
+            // 2. Open Cache
+            const cache = await caches.open(CACHE_NAME);
+            
+            // 3. Download in batches or appropriately
+            // browsers handle parallel requests well, but let's limit concurrency slightly to be safe
+            // or just loop. 'cache.addAll' is atomic and fails if one fails, so we do manual 'put' loop for progress tracking.
+            
+            // Chunking for progress updates and to avoid network saturation
+            const BATCH_SIZE = 10;
+            for (let i = 0; i < total; i += BATCH_SIZE) {
+               const batch = files.slice(i, i + BATCH_SIZE);
+               await Promise.all(batch.map(async (url) => {
+                  try {
+                    // Cache.add does a fetch and put
+                    await cache.add(url); 
+                  } catch (e) {
+                    console.warn('Failed to cache:', url, e);
+                    // We continue even if one fails (optional: retry logic)
+                  }
+                  count++;
+               }));
+               
+               // Update UI
+               const percent = Math.floor((count / total) * 100);
+               progressBar.style.width = percent + '%';
+               progressText.innerText = `${count} / ${total}`;
+            }
+
+            // Done
+            localStorage.setItem('offline-ready', 'true');
+            progressText.innerText = "Download Complete!";
+            setTimeout(() => {
+               document.getElementById('offline-ui').style.display = 'none';
+            }, 2000);
+
+          } catch (err) {
+            console.error(err);
+            btn.style.display = 'block';
+            progressDiv.style.display = 'none';
+            alert("Error downloading assets: " + err.message);
+          }
+        }
+
+        document.getElementById('download-btn').addEventListener('click', downloadAssets);
+        
+        // Init
+        window.addEventListener('load', checkOfflineStatus);
+      })();
+    </script>
+
     <script type="text/javascript" src="js/main.js"></script>
     <script>
       if ("serviceWorker" in navigator) {
+        // Unregister old workers to ensure fresh code
+        /* 
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+           for(let registration of registrations) {
+            registration.unregister();
+          } 
+        }); 
+        */
+        
         window.addEventListener("load", () => {
           navigator.serviceWorker
             .register("sw.js")
             .then((registration) => {
-              console.log(
-                "ServiceWorker registration successful with scope: ",
-                registration.scope
-              );
+              console.log("ServiceWorker registration successful");
             })
             .catch((err) => {
               console.log("ServiceWorker registration failed: ", err);
