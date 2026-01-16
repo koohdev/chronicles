@@ -19,7 +19,7 @@ if (workbox) {
   // The revision field enables cache-busting when files change.
   // For files with hashes in their names, revision can be null.
   const PRECACHE_MANIFEST = [
-    { url: "./index.html", revision: "v3" },
+    { url: "./index.html", revision: "v4" },
     { url: "./css/game.css", revision: "v2" },
     { url: "./manifest.json", revision: "v1" },
     { url: "./icon/icon.png", revision: "v1" },
