@@ -19,7 +19,7 @@ if (workbox) {
   // The revision field enables cache-busting when files change.
   // For files with hashes in their names, revision can be null.
   const PRECACHE_MANIFEST = [
-    { url: "./index.html", revision: "v4" },
+    { url: "./index.html", revision: "v5" },
     { url: "./css/game.css", revision: "v2" },
     { url: "./manifest.json", revision: "v1" },
     { url: "./icon/icon.png", revision: "v1" },
@@ -38,6 +38,16 @@ if (workbox) {
     { url: "./js/rmmz_sprites.js", revision: "v1" },
     { url: "./js/rmmz_windows.js", revision: "v1" },
     { url: "./js/plugins.js", revision: "v1" },
+    // Plugin files (Required for game features)
+    { url: "./js/plugins/MathBattleSystem_MZ.js", revision: "v1" },
+    { url: "./js/plugins/Alpha_NETZ.js", revision: "v1" },
+    { url: "./js/plugins/AltMenuScreen.js", revision: "v1" },
+    { url: "./js/plugins/AltSaveScreen.js", revision: "v1" },
+    { url: "./js/plugins/ButtonPicture.js", revision: "v1" },
+    { url: "./js/plugins/COCOMODE_enemyLevels.js", revision: "v1" },
+    { url: "./js/plugins/ProceduralQuestSystem.js", revision: "v1" },
+    { url: "./js/plugins/SimpleQuestLog.js", revision: "v1" },
+    { url: "./js/plugins/TextPicture.js", revision: "v1" },
     // Core Data files (Needed for boot)
     { url: "./data/System.json", revision: "v1" },
     { url: "./data/Actors.json", revision: "v1" },
@@ -53,6 +63,11 @@ if (workbox) {
     { url: "./data/Tilesets.json", revision: "v1" },
     { url: "./data/CommonEvents.json", revision: "v1" },
     { url: "./data/MapInfos.json", revision: "v1" },
+    // Map files (for offline gameplay)
+    { url: "./data/Map001.json", revision: "v1" },
+    { url: "./data/Map002.json", revision: "v1" },
+    { url: "./data/Map003.json", revision: "v1" },
+    { url: "./data/Map004.json", revision: "v1" },
   ];
 
   // Log precache list

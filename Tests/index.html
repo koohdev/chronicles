@@ -20,7 +20,7 @@
       if ("serviceWorker" in navigator) {
         // Force clear all caches and unregister old service workers on first load
         // This ensures users get the latest audio fix
-        const CACHE_VERSION = "v3"; // Increment this to force refresh
+        const CACHE_VERSION = "v4"; // Increment this to force refresh
         const hasCleared = localStorage.getItem(
           "cache_cleared_" + CACHE_VERSION
         );
